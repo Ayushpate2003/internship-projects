@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   update-browserslist-database:
@@ -21,13 +20,15 @@ jobs:
         run: |
           git config --global user.email "action@github.com"
           git config --global user.name "GitHub Action"
-      - name: Update Browserslist database and create PR if applies
-        uses: c2corg/browserslist-update-action@v2
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: browserslist-update
-          base_branch: main
-          commit_message: 'chore(deps): update Browserslist db'
-          title: 'chore(deps): update Browserslist db'
-          labels: 'pr: chore, source: dependencies'
-          reviewers: 'joshuaellis,simotae14,madhurisandbhor'
+      - name: Update Browserslist database
+        run: yarn dlx update-browserslist-db@latest
+      - name: Commit and push updates
+        run: |
+          if git diff --quiet; then
+            echo "No Browserslist updates to commit."
+            exit 0
+          fi
+
+          git add -A
+          git commit -m "chore(deps): update Browserslist db"
+          git push origin HEAD:main
